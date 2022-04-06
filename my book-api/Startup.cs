@@ -2,11 +2,14 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using my_book_api.Data;
+using my_book_api.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,9 +19,11 @@ namespace my_book_api
 {
     public class Startup
     {
+        public string Connectionstring { get; set; }
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            Connectionstring = configuration.GetConnectionString("Deafultconnectionstring");
         }
 
         public IConfiguration Configuration { get; }
@@ -28,9 +33,15 @@ namespace my_book_api
         {
 
             services.AddControllers();
+            //configure DbContext with SQl
+
+            services.AddDbContext<AppDbcontext>(options => options.UseSqlServer(Connectionstring));
+
+            //Configure the services 
+            services.AddTransient<BookServices>();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "my_book_api", Version = "v1" });
+                c.SwaggerDoc("v2", new OpenApiInfo { Title = "my_book_api_updatesd", Version = "v2" });
             });
         }
 
@@ -41,7 +52,7 @@ namespace my_book_api
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "my_book_api v1"));
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v2/swagger.json", "my_book_api_updated v1"));
             }
 
             app.UseHttpsRedirection();
@@ -54,6 +65,7 @@ namespace my_book_api
             {
                 endpoints.MapControllers();
             });
+            AppDbIntializer.seed(app);
         }
     }
 }
